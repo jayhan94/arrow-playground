@@ -1,0 +1,9 @@
+[package]
+name = "arrow-playground"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+arrow = "54.2.1"
+arrow-arith = "54.2.1"
+arrow-select = "54.2.1"
