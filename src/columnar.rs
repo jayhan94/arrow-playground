@@ -1,4 +1,4 @@
-use arrow::array::{AsArray, BooleanArray, Int32Array, RecordBatch, StringArray};
+use arrow::array::{AsArray, BooleanArray, Int32Array, RecordBatch, StringViewArray};
 
 use crate::exec::{DataStream, ExecutionPlan};
 use crate::DATA_COUNT;
@@ -13,6 +13,7 @@ pub(crate) struct DataSource;
 pub(crate) struct DataSourceStream {
     dataset: Vec<Arc<RecordBatch>>,
     i: usize,
+    project: Vec<usize>,
 }
 
 impl DataSource {
@@ -33,7 +34,7 @@ impl ExecutionPlan for DataSource {
                 let c = Arc::new(BooleanArray::from(
                     chunk.iter().map(|i| i % 2 == 0).collect::<Vec<bool>>(),
                 ));
-                let d = Arc::new(StringArray::from(
+                let d = Arc::new(StringViewArray::from(
                     chunk
                         .iter()
                         .map(|i| format!("hello world {}", i))
@@ -42,13 +43,17 @@ impl ExecutionPlan for DataSource {
                 let field_a = Field::new("a", DataType::Int32, false);
                 let field_b = Field::new("b", DataType::Int32, false);
                 let field_c = Field::new("c", DataType::Boolean, false);
-                let field_d = Field::new("d", DataType::Utf8, false);
+                let field_d = Field::new("d", DataType::Utf8View, false);
 
                 let schema = Arc::new(Schema::new(vec![field_a, field_b, field_c, field_d]));
                 let one_batch = RecordBatch::try_new(schema, vec![a, b, c, d]).unwrap();
                 dataset.push(Arc::new(one_batch));
             });
-        Box::new(DataSourceStream { dataset, i: 0 })
+        Box::new(DataSourceStream {
+            dataset,
+            i: 0,
+            project: vec![0, 1, 2],
+        })
     }
 }
 
@@ -57,9 +62,9 @@ impl DataStream for DataSourceStream {
         if self.i >= self.dataset.len() {
             return None;
         }
-        let result = self.dataset[self.i].clone();
+        let result = self.dataset[self.i].project(&self.project).unwrap();
         self.i += 1;
-        Some(result)
+        Some(Arc::new(result))
     }
 }
 
