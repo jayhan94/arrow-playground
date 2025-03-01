@@ -1,58 +1,36 @@
-use arrow::array::{AsArray, BooleanArray, Int32Array, RecordBatch, StringViewArray};
+use arrow::array::{AsArray, RecordBatch};
 
 use crate::exec::{DataStream, ExecutionPlan};
-use crate::DATA_COUNT;
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow_arith::numeric::add;
 use arrow_select::filter::filter_record_batch;
 use std::any::Any;
 use std::sync::Arc;
 
-pub(crate) struct DataSource;
+pub struct DataSource {
+    dataset: Arc<Vec<Arc<RecordBatch>>>,
+    project: Arc<Vec<usize>>,
+}
 
-pub(crate) struct DataSourceStream {
-    dataset: Vec<Arc<RecordBatch>>,
+#[allow(dead_code)]
+pub struct DataSourceStream {
+    dataset: Arc<Vec<Arc<RecordBatch>>>,
     i: usize,
-    project: Vec<usize>,
+    project: Arc<Vec<usize>>,
 }
 
 impl DataSource {
-    pub fn new() -> Self {
-        DataSource {}
+    pub fn new(dataset: Arc<Vec<Arc<RecordBatch>>>, project: Arc<Vec<usize>>) -> Self {
+        DataSource { dataset, project }
     }
 }
 
 impl ExecutionPlan for DataSource {
     fn execute(&self) -> Box<dyn DataStream> {
-        let mut dataset = Vec::new();
-        (0..DATA_COUNT)
-            .collect::<Vec<i32>>()
-            .chunks(8192)
-            .for_each(|chunk| {
-                let a = Arc::new(Int32Array::from(chunk.to_vec()));
-                let b = Arc::new(Int32Array::from(chunk.to_vec()));
-                let c = Arc::new(BooleanArray::from(
-                    chunk.iter().map(|i| i % 2 == 0).collect::<Vec<bool>>(),
-                ));
-                let d = Arc::new(StringViewArray::from(
-                    chunk
-                        .iter()
-                        .map(|i| format!("hello world {}", i))
-                        .collect::<Vec<String>>(),
-                ));
-                let field_a = Field::new("a", DataType::Int32, false);
-                let field_b = Field::new("b", DataType::Int32, false);
-                let field_c = Field::new("c", DataType::Boolean, false);
-                let field_d = Field::new("d", DataType::Utf8View, false);
-
-                let schema = Arc::new(Schema::new(vec![field_a, field_b, field_c, field_d]));
-                let one_batch = RecordBatch::try_new(schema, vec![a, b, c, d]).unwrap();
-                dataset.push(Arc::new(one_batch));
-            });
         Box::new(DataSourceStream {
-            dataset,
+            dataset: self.dataset.clone(),
             i: 0,
-            project: vec![0, 1, 2],
+            project: self.project.clone(),
         })
     }
 }
@@ -62,17 +40,18 @@ impl DataStream for DataSourceStream {
         if self.i >= self.dataset.len() {
             return None;
         }
-        let result = self.dataset[self.i].project(&self.project).unwrap();
+        // projection is zero-copy
+        let result = Arc::new(self.dataset[self.i].project(&self.project[..]).unwrap());
         self.i += 1;
-        Some(Arc::new(result))
+        Some(result)
     }
 }
 
-pub(crate) struct Filter {
+pub struct Filter {
     child: Box<dyn ExecutionPlan>,
 }
 
-pub(crate) struct FilterStream {
+pub struct FilterStream {
     child_stream: Box<dyn DataStream>,
 }
 
@@ -103,11 +82,11 @@ impl DataStream for FilterStream {
     }
 }
 
-pub(crate) struct Project {
+pub struct Project {
     child: Box<dyn ExecutionPlan>,
 }
 
-pub(crate) struct ProjectStream {
+pub struct ProjectStream {
     schema: Arc<Schema>,
     child_stream: Box<dyn DataStream>,
 }

@@ -1,19 +1,18 @@
 use crate::exec::{DataStream, ExecutionPlan};
-use crate::DATA_COUNT;
 use std::any::Any;
 use std::sync::Arc;
 
 #[allow(dead_code)]
-struct RowData {
-    a: i32,
-    b: i32,
-    c: bool,
-    d: String,
+pub struct RowData {
+    pub a: i32,
+    pub b: i32,
+    pub c: bool,
+    pub d: String,
 }
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub(crate) struct ResultData {
+pub struct ResultData {
     sum: i32,
 }
 
@@ -21,32 +20,27 @@ unsafe impl Send for RowData {}
 
 unsafe impl Sync for RowData {}
 
-pub(crate) struct DataSource;
+pub struct DataSource {
+    dataset: Arc<Vec<Arc<RowData>>>,
+}
 
-pub(crate) struct DataSourceStream {
-    dataset: Vec<Arc<RowData>>,
+pub struct DataSourceStream {
+    dataset: Arc<Vec<Arc<RowData>>>,
     i: usize,
 }
 
 impl DataSource {
-    pub fn new() -> Self {
-        DataSource {}
+    pub fn new(dataset: Arc<Vec<Arc<RowData>>>) -> Self {
+        DataSource { dataset }
     }
 }
 
 impl ExecutionPlan for DataSource {
     fn execute(&self) -> Box<dyn DataStream> {
-        let mut dataset = vec![];
-        for i in 0..DATA_COUNT {
-            let data = Arc::new(RowData {
-                a: i,
-                b: i,
-                c: i % 2 == 0,
-                d: format!("hello world {}", i),
-            });
-            dataset.push(data);
-        }
-        Box::new(DataSourceStream { dataset, i: 0 })
+        Box::new(DataSourceStream {
+            dataset: self.dataset.clone(),
+            i: 0,
+        })
     }
 }
 
@@ -61,11 +55,11 @@ impl DataStream for DataSourceStream {
     }
 }
 
-pub(crate) struct Filter {
+pub struct Filter {
     child: Box<dyn ExecutionPlan>,
 }
 
-pub(crate) struct FilterStream {
+pub struct FilterStream {
     child_stream: Box<dyn DataStream>,
 }
 
@@ -95,11 +89,11 @@ impl DataStream for FilterStream {
     }
 }
 
-pub(crate) struct Project {
+pub struct Project {
     child: Box<dyn ExecutionPlan>,
 }
 
-pub(crate) struct ProjectStream {
+pub struct ProjectStream {
     child_stream: Box<dyn DataStream>,
 }
 

@@ -1,5 +1,5 @@
 [package]
-name = "arrow-playground"
+name = "arrow_playground"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,3 +7,10 @@ edition = "2024"
 arrow = "54.2.1"
 arrow-arith = "54.2.1"
 arrow-select = "54.2.1"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "bench_query"
+harness = false
