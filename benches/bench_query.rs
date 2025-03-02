@@ -8,8 +8,8 @@ use arrow_playground::columnar::{
 use arrow_playground::exec::DataStream;
 use arrow_playground::exec::ExecutionPlan;
 use arrow_playground::traditional;
-use arrow_playground::traditional::Filter as TraditionalFilter;
 use arrow_playground::traditional::Project as TraditionalProject;
+use arrow_playground::traditional::{CompiledProject, Filter as TraditionalFilter};
 use arrow_playground::traditional::{DataSource as TraditionalDataSource, RowData};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::ops::DerefMut;
@@ -24,6 +24,18 @@ pub fn bench_traditional(c: &mut Criterion) {
     let source = TraditionalDataSource::new(traditional_source_data(COUNT));
     let filter = TraditionalFilter::new(Box::new(source));
     let project = TraditionalProject::new(Box::new(filter));
+    group.bench_function("traditional", |bencher| {
+        bencher.iter(|| {
+            let stream = project.execute();
+            black_box(consume_stream(stream));
+        });
+    });
+}
+
+// benchmark of compiled traditional execution
+pub fn bench_compiled_traditional(c: &mut Criterion) {
+    let mut group = c.benchmark_group("columnar_vs_row");
+    let project = CompiledProject::new(traditional_source_data(COUNT));
     group.bench_function("traditional", |bencher| {
         bencher.iter(|| {
             let stream = project.execute();
@@ -99,5 +111,5 @@ criterion_group!(
     config = Criterion::default()
         .warm_up_time(Duration::from_secs(3))
         .measurement_time(Duration::from_secs(3));
-    targets = bench_traditional, bench_columnar);
+    targets = bench_traditional, bench_compiled_traditional, bench_columnar);
 criterion_main!(columnar_vs_row);
