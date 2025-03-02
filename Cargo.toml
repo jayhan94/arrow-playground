@@ -12,5 +12,13 @@ arrow-select = "54.2.1"
 criterion = "0.5"
 
 [[bench]]
-name = "bench_query"
+name = "bench_traditional"
+harness = false
+
+[[bench]]
+name = "bench_compiled_traditional"
+harness = false
+
+[[bench]]
+name = "bench_columnar"
 harness = false
