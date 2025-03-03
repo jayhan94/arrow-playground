@@ -7,7 +7,7 @@ traditional row-oriented systems.
 
 # Benchmark
 
-The benchmark shows that arrow's implementation is 5x faster than row-oriented.
+The benchmark shows that arrow's implementation is 25x faster than row-oriented implementation and 5x faster than compiled execution.
 
 ```bash
 cargo bench
