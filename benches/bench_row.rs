@@ -11,7 +11,7 @@ use std::time::Duration;
 
 // benchmark of traditional execution
 pub fn bench_row(c: &mut Criterion) {
-    let mut group = c.benchmark_group("traditional");
+    let mut group = c.benchmark_group("row");
     let source = TraditionalDataSource::new(source_data(COUNT));
     let filter = TraditionalFilter::new(Box::new(source));
     let project = TraditionalProject::new(Box::new(filter));

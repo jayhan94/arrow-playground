@@ -9,7 +9,7 @@ use std::time::Duration;
 
 // benchmark of compiled traditional execution
 pub fn bench_compiled(c: &mut Criterion) {
-    let mut group = c.benchmark_group("compiled_traditional");
+    let mut group = c.benchmark_group("compiled");
     let project = CompiledProject::new(source_data(COUNT));
     group.bench_function("consume_stream", |bencher| {
         bencher.iter(|| {
