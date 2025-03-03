@@ -27,10 +27,10 @@ pub fn source_data(count: i32) -> Arc<Vec<Arc<Row>>> {
     let mut dataset = Vec::with_capacity(count as usize);
     for i in 0..count {
         let mut row = Row::empty(4);
-        row.set(0, Arc::new(i));
-        row.set(1, Arc::new(i));
-        row.set(2, Arc::new(i % 2 == 0));
-        row.set(3, Arc::new(format!("hello world {}", i)));
+        row.set(0, Some(Arc::new(Box::new(i))));
+        row.set(1, Some(Arc::new(Box::new(i))));
+        row.set(2, Some(Arc::new(Box::new(i % 2 == 0))));
+        row.set(3, Some(Arc::new(Box::new(format!("hello world {}", i)))));
         dataset.push(Arc::new(row));
     }
     Arc::new(dataset)

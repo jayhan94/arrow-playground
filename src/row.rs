@@ -3,28 +3,26 @@ use crate::shared_data::SharedData;
 use std::sync::Arc;
 
 pub struct Row {
-    columns: Arc<Vec<SharedData>>,
+    columns: Arc<Vec<Option<SharedData>>>,
 }
 
 impl Row {
     pub fn empty(size: usize) -> Self {
-        let mut values = Vec::with_capacity(size);
-        for i in 0..size {
-            values.push(Arc::new(i) as SharedData);
-        }
         Self {
-            columns: Arc::new(values),
+            columns: Arc::new(vec![None; size]),
         }
     }
 
-    pub fn set(&mut self, i: usize, value: SharedData) {
+    pub fn set(&mut self, i: usize, value: Option<SharedData>) {
         if let Some(mut_vec) = Arc::get_mut(&mut self.columns) {
             mut_vec[i] = value;
+        } else {
+            eprintln!("unexpected column index {}", i);
         }
     }
 
-    pub fn get(&self, i: usize) -> SharedData {
-        self.columns[i].clone()
+    pub fn get(&self, i: usize) -> &Option<SharedData> {
+        &self.columns[i]
     }
 }
 
@@ -89,7 +87,13 @@ impl DataStream for FilterStream {
     fn poll_next(&mut self) -> Option<SharedData> {
         while let Some(value) = self.child_stream.poll_next() {
             let row = value.downcast::<Row>().unwrap();
-            if *row.get(2).downcast::<bool>().unwrap() {
+            if **row
+                .get(2)
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<Box<bool>>()
+                .unwrap()
+            {
                 return Some(row);
             }
         }
@@ -123,9 +127,19 @@ impl DataStream for ProjectStream {
     fn poll_next(&mut self) -> Option<SharedData> {
         if let Some(value) = self.child_stream.poll_next() {
             let row = value.downcast::<Row>().unwrap();
-            let sum = Arc::new(
-                *row.get(0).downcast::<i32>().unwrap() + *row.get(1).downcast::<i32>().unwrap(),
-            );
+            let a = **row
+                .get(0)
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<Box<i32>>()
+                .unwrap();
+            let b = **row
+                .get(1)
+                .as_ref()
+                .unwrap()
+                .downcast_ref::<Box<i32>>()
+                .unwrap();
+            let sum = Some(Arc::new(Box::new(a + b)) as SharedData);
             let mut ret_row = Row::empty(1);
             ret_row.set(0, sum);
             return Some(Arc::new(ret_row));
