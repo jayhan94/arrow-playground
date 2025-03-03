@@ -12,11 +12,11 @@ arrow-select = "54.2.1"
 criterion = "0.5"
 
 [[bench]]
-name = "bench_traditional"
+name = "bench_row"
 harness = false
 
 [[bench]]
-name = "bench_compiled_traditional"
+name = "bench_compiled"
 harness = false
 
 [[bench]]

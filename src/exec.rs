@@ -1,8 +1,7 @@
-use std::any::Any;
-use std::sync::Arc;
+use crate::shared_data::SharedData;
 
 pub trait DataStream {
-    fn poll_next(&mut self) -> Option<Arc<dyn Any + Send + Sync>>;
+    fn poll_next(&mut self) -> Option<SharedData>;
 }
 
 pub trait ExecutionPlan {

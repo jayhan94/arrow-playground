@@ -1,3 +1,5 @@
 pub mod columnar;
+pub mod compiled;
 pub mod exec;
-pub mod traditional;
+pub mod row;
+mod shared_data;
