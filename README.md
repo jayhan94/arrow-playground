@@ -6,8 +6,8 @@ It aims to uncover the underlying reasons for the superior performance of arrow-
 traditional row-oriented systems.
 
 # Benchmark
-
-The benchmark of my mac-m1-pro laptop shows that arrow's implementation is 25x faster than row-oriented implementation and 5x faster than compiled execution.
+I use my own macbook m1 pro to do this benchmark whose width of its simd register should be 128.
+The benchmark shows that arrow's implementation is 25x faster than row-oriented implementation and 5x faster than compiled execution.
 
 ```bash
 cargo bench
